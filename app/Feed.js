@@ -97,7 +97,10 @@ export default function Feed({ initialData }) {
   const handleSelectTimeHorizon = (horizonId) => {
     setTimeHorizon(horizonId);
     if (["week", "month", "six_months", "year"].includes(horizonId)) {
+      setSortBy("top");
       loadTopStories(horizonId, activeTopic);
+    } else {
+      setSortBy("newest");
     }
   };
 
@@ -192,8 +195,12 @@ export default function Feed({ initialData }) {
       );
     }
 
+    const isTopHorizon = ["week", "month", "six_months", "year"].includes(timeHorizon);
     const sorted = [...list];
-    if (sortBy === "newest") {
+
+    if (sortBy === "top" || (isTopHorizon && sortBy !== "newest")) {
+      sorted.sort((a, b) => (b.points || 0) - (a.points || 0) || (b.score || 0) - (a.score || 0) || b.date - a.date);
+    } else if (sortBy === "newest") {
       sorted.sort((a, b) => b.date - a.date);
     } else if (sortBy === "relevance") {
       sorted.sort((a, b) => (b.points || b.score || 0) - (a.points || a.score || 0) || b.date - a.date);
@@ -340,12 +347,21 @@ export default function Feed({ initialData }) {
             <div className="flex items-center gap-1.5 text-xs text-[var(--fg-dim)]">
               <span>Sort:</span>
               <select
-                value={sortBy}
+                value={["week", "month", "six_months", "year"].includes(timeHorizon) && sortBy !== "newest" ? "top" : sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
                 className="bg-[var(--bg-subtle)] border border-[var(--border)] text-[var(--fg-muted)] px-2 py-1 rounded text-xs focus:outline-none"
               >
-                <option value="newest">Newest First</option>
-                <option value="relevance">Highest Upvotes / Points</option>
+                {["week", "month", "six_months", "year"].includes(timeHorizon) ? (
+                  <>
+                    <option value="top">▲ Most Upvoted (Top Rated)</option>
+                    <option value="newest">Newest First</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="newest">Newest First</option>
+                    <option value="relevance">Highest Technical Relevance</option>
+                  </>
+                )}
               </select>
             </div>
           </div>
