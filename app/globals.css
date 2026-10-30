@@ -28,6 +28,11 @@
 
     /* Focus ring */
     --ring: rgba(37, 99, 235, 0.4);
+
+    /* Visible Editorial Scrollbar */
+    --scrollbar-track: #f1f5f9;
+    --scrollbar-thumb: #94a3b8;
+    --scrollbar-thumb-hover: #64748b;
   }
 
   .dark {
@@ -53,6 +58,11 @@
     --accent-border: rgba(59, 130, 246, 0.25);
 
     --ring: rgba(59, 130, 246, 0.5);
+
+    /* Visible Editorial Scrollbar */
+    --scrollbar-track: #0f1523;
+    --scrollbar-thumb: #334155;
+    --scrollbar-thumb-hover: #475569;
   }
 }
 
@@ -107,18 +117,25 @@ body {
   }
 }
 
-/* Minimal scrollbar */
+/* Standard Firefox scrollbar support */
+html {
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-width: thin;
+}
+
+/* Polished, visible editorial scrollbar for Webkit/Blink */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 9px;
+  height: 9px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--bg-subtle);
+  background: var(--scrollbar-track);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border-default);
-  border-radius: 4px;
+  background: var(--scrollbar-thumb);
+  border-radius: 6px;
+  border: 2px solid var(--scrollbar-track);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--fg-muted);
+  background: var(--scrollbar-thumb-hover);
 }

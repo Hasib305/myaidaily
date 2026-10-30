@@ -383,8 +383,15 @@ export default function Feed({ initialData }) {
             </div>
           </div>
 
-          {/* Horizontally Scrollable Topic Chips */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
+          {/* Horizontally Scrollable Topic Chips (wheel & drag enabled) */}
+          <div
+            onWheel={(e) => {
+              if (e.deltaY !== 0) {
+                e.currentTarget.scrollLeft += e.deltaY;
+              }
+            }}
+            className="flex items-center gap-1.5 overflow-x-auto pb-1.5 pt-0.5"
+          >
             {TOPICS.map((topic) => (
               <button
                 key={topic.id}
@@ -544,9 +551,9 @@ export default function Feed({ initialData }) {
             )}
           </div>
 
-          {/* Right Sidebar Region (cols 9..12 on desktop) */}
+          {/* Right Sidebar Region (cols 9..12 on desktop with independent scrolling) */}
           <div className="hidden lg:block lg:col-span-4">
-            <div className="sticky top-32">
+            <div className="sticky top-28 max-h-[calc(100vh-7.5rem)] overflow-y-auto pr-2 pb-8 overscroll-contain">
               <Sidebar
                 trendingTags={trendingTags}
                 activeSources={activeSources}
