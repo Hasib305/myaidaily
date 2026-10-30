@@ -203,13 +203,12 @@ export default function Feed({ initialData }) {
   }, [currentSourceList, timeHorizon, activeTopic, activeTag, searchQuery, sortBy]);
 
   const resetFilters = () => {
-    setTimeHorizon("live");
     setActiveTopic("all");
     setActiveTag("");
     setSearchQuery("");
   };
 
-  const hasActiveFilters = activeTopic !== "all" || activeTag || searchQuery.trim() || timeHorizon !== "live";
+  const hasActiveFilters = activeTopic !== "all" || activeTag || searchQuery.trim();
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg)] text-[var(--fg)]">
