@@ -1,17 +1,15 @@
 import { getNews } from "../lib/feeds";
 import Feed from "./Feed";
 
-export const revalidate = 3600; // rebuild hourly
+export const revalidate = 3600; // Hourly Incremental Static Regeneration on Vercel
+
+export const metadata = {
+  title: "AI Pulse · AI Engineer's Daily Intelligence Wire",
+  description:
+    "Zero-token daily updates on emerging AI technology: KAG, RAG, MCP, Reasoning models, vLLM, SGLang, and recent architectural paradigm shifts.",
+};
 
 export default async function Home() {
-  const items = await getNews();
-  return (
-    <main>
-      <header>
-        <h1>AI Pulse</h1>
-        <p>Updated {new Date().toUTCString()} · {items.length} items</p>
-      </header>
-      <Feed items={items} />
-    </main>
-  );
+  const initialData = await getNews();
+  return <Feed initialData={initialData} />;
 }
