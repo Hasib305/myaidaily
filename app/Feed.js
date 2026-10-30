@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import Navbar from "./components/Navbar";
 import NewsCard from "./components/NewsCard";
-import { X, ChevronDown, ChevronUp, Info, Check, Flame, Trophy, Sparkles } from "lucide-react";
+import { X, Check, Flame, Trophy, Sparkles } from "lucide-react";
 
 const TOPICS = [
   { id: "all", label: "All Topics" },
@@ -21,14 +21,6 @@ const TIME_HORIZONS = [
   { id: "month", label: "Top of the Month", isTop: true },
   { id: "six_months", label: "Top 6 Months", isTop: true },
   { id: "year", label: "Top of the Year", isTop: true },
-];
-
-const QUICK_EXPLAINERS = [
-  { term: "KAG", def: "Knowledge-Augmented Generation: Combines LLMs with knowledge graphs & logic solvers to replace naive RAG vector joins with verified facts." },
-  { term: "MCP", def: "Model Context Protocol: Anthropic's universal open standard for connecting AI agents to external tools, databases, and IDEs." },
-  { term: "GRPO", def: "Group Relative Policy Optimization: DeepSeek-R1's RL algorithm enabling reasoning models to self-improve without a separate Critic model." },
-  { term: "RadixAttention", def: "SGLang's KV-cache reuse tree: Retains shared prompt prefixes across multi-turn agent chats to cut latency by 80%." },
-  { term: "SLMs", def: "Small Language Models: 1B-8B parameter models (Llama 3.2, Gemma 2, Phi-4) running locally on consumer hardware." },
 ];
 
 export default function Feed({ initialData }) {
@@ -51,7 +43,6 @@ export default function Feed({ initialData }) {
   const [sortBy, setSortBy] = useState("newest"); // 'newest' | 'relevance'
   const [bookmarks, setBookmarks] = useState([]);
   const [isDark, setIsDark] = useState(false);
-  const [showGuide, setShowGuide] = useState(false);
 
   // Load saved bookmarks and theme from localStorage
   useEffect(() => {
@@ -246,30 +237,6 @@ export default function Feed({ initialData }) {
             </button>
           </div>
         )}
-
-        {/* Quick Reference Guide Toggle */}
-        <div className="mb-6 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border)] overflow-hidden">
-          <button
-            onClick={() => setShowGuide(!showGuide)}
-            className="w-full px-4 py-2.5 text-xs text-[var(--fg-muted)] hover:text-[var(--fg)] flex items-center justify-between transition-colors font-medium"
-          >
-            <span className="flex items-center gap-1.5">
-              <Info className="w-3.5 h-3.5 text-blue-600" />
-              Quick Reference: What are these new AI technologies? (KAG, MCP, GRPO, vLLM)
-            </span>
-            {showGuide ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
-          {showGuide && (
-            <div className="px-4 pb-4 pt-1 border-t border-[var(--border)] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
-              {QUICK_EXPLAINERS.map((q) => (
-                <div key={q.term} className="p-2.5 rounded bg-[var(--bg)] border border-[var(--border-subtle)]">
-                  <span className="font-bold text-blue-600 dark:text-blue-400 block mb-0.5">{q.term}</span>
-                  <p className="text-[11px] text-[var(--fg-muted)] leading-relaxed">{q.def}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
 
         {/* Clean Filter Bar */}
         <div className="mb-6 space-y-3">
