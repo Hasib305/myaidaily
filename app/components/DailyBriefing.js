@@ -67,3 +67,4 @@ export default function DailyBriefing({ briefing = [] }) {
     </section>
   );
 }
+
