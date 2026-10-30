@@ -1,4 +1,4 @@
-# ⚡ AI Pulse · The AI Engineer's Daily Intelligence Wire
+# ⚡ MyAIDaily · The AI Engineer's Daily Intelligence Wire
 
 A high-signal, modern editorial platform built for **Software Engineers and AI Engineers** to stay continuously up to date with new AI technologies, architectures, and breakthroughs—without noise, without Twitter doomscrolling, and with **zero unnecessary token consumption**.
 
@@ -47,11 +47,11 @@ AI Pulse requires **zero external API keys or database setup** to function out-o
 1. Push your repository to GitHub:
    ```bash
    git add .
-   git commit -m "feat: complete AI Pulse platform"
+   git commit -m "feat: complete MyAIDaily platform"
    git push origin main
    ```
 2. Go to [Vercel](https://vercel.com) and click **"Add New Project"**.
-3. Import your `ai-pulse` repository and click **"Deploy"**.
+3. Import your `myaidaily` repository and click **"Deploy"**.
 4. Vercel automatically pre-renders the feed and refreshes it hourly via ISR (`export const revalidate = 3600`).
 
 ---
@@ -59,7 +59,7 @@ AI Pulse requires **zero external API keys or database setup** to function out-o
 ## 📂 Project Structure
 
 ```
-ai-pulse/
+myaidaily/
 ├── app/
 │   ├── components/
 │   │   ├── Navbar.js         # Top navigation, search '/', theme toggle, saved counter

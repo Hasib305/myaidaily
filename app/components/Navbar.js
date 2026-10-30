@@ -43,7 +43,7 @@ export default function Navbar({
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-bold text-base tracking-tight text-[var(--fg)]">
-                  AI Pulse
+                  MyAIDaily
                 </span>
                 <span className="hidden sm:inline-block text-[11px] font-mono px-2 py-0.5 rounded bg-[var(--bg-subtle)] text-[var(--fg-muted)] border border-[var(--border)]">
                   Engineering Wire
@@ -91,11 +91,10 @@ export default function Navbar({
             {/* Saved Bookmarks */}
             <button
               onClick={() => onSelectTab(activeTab === "bookmarks" ? "all" : "bookmarks")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                activeTab === "bookmarks"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${activeTab === "bookmarks"
                   ? "bg-blue-600 text-white border-blue-600"
                   : "bg-[var(--bg-subtle)] text-[var(--fg-muted)] border-[var(--border)] hover:text-[var(--fg)] hover:border-[var(--fg-dim)]"
-              }`}
+                }`}
               title="Saved reading list"
             >
               <Bookmark className={`w-3.5 h-3.5 ${bookmarksCount > 0 ? "fill-amber-500 text-amber-500" : ""}`} />

@@ -1,7 +1,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "AI Pulse · AI Engineering News & Research Wire",
+  title: "MyAIDaily · AI Engineering News & Research Wire",
   description:
     "Real-time engineering updates on new AI models, frameworks, MCP, KAG, RAG, and reasoning breakthroughs with zero token overhead.",
 };

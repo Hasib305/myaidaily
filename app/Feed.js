@@ -44,15 +44,15 @@ export default function Feed({ initialData }) {
   // Load saved bookmarks and theme from localStorage
   useEffect(() => {
     try {
-      const savedBookmarks = localStorage.getItem("aipulse_bookmarks");
+      const savedBookmarks = localStorage.getItem("myaidaily_bookmarks") || localStorage.getItem("aipulse_bookmarks");
       if (savedBookmarks) setBookmarks(JSON.parse(savedBookmarks));
 
-      const savedTheme = localStorage.getItem("aipulse_theme");
+      const savedTheme = localStorage.getItem("myaidaily_theme") || localStorage.getItem("aipulse_theme");
       if (savedTheme) {
         setIsDark(savedTheme === "dark");
         document.documentElement.classList.toggle("dark", savedTheme === "dark");
       }
-    } catch {}
+    } catch { }
 
     const handleKeyDown = (e) => {
       if (e.key === "/" && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
@@ -93,8 +93,8 @@ export default function Feed({ initialData }) {
     setIsDark(nextDark);
     document.documentElement.classList.toggle("dark", nextDark);
     try {
-      localStorage.setItem("aipulse_theme", nextDark ? "dark" : "light");
-    } catch {}
+      localStorage.setItem("myaidaily_theme", nextDark ? "dark" : "light");
+    } catch { }
   };
 
   const toggleBookmark = (item) => {
@@ -107,8 +107,8 @@ export default function Feed({ initialData }) {
     }
     setBookmarks(next);
     try {
-      localStorage.setItem("aipulse_bookmarks", JSON.stringify(next));
-    } catch {}
+      localStorage.setItem("myaidaily_bookmarks", JSON.stringify(next));
+    } catch { }
   };
 
   // Filtered stories
@@ -224,44 +224,40 @@ export default function Feed({ initialData }) {
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setTimeHorizon("all")}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                  timeHorizon === "all"
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${timeHorizon === "all"
                     ? "bg-blue-600 text-white"
                     : "text-[var(--fg-muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-subtle)]"
-                }`}
+                  }`}
               >
                 All Stories ({items.length})
               </button>
 
               <button
                 onClick={() => setTimeHorizon("today")}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                  timeHorizon === "today"
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${timeHorizon === "today"
                     ? "bg-blue-600 text-white"
                     : "text-[var(--fg-muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-subtle)]"
-                }`}
+                  }`}
               >
                 Today ({stats.todayCount || 0})
               </button>
 
               <button
                 onClick={() => setTimeHorizon("week")}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                  timeHorizon === "week"
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${timeHorizon === "week"
                     ? "bg-blue-600 text-white"
                     : "text-[var(--fg-muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-subtle)]"
-                }`}
+                  }`}
               >
                 Past 7 Days ({stats.weekCount || 0})
               </button>
 
               <button
                 onClick={() => setTimeHorizon("month")}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                  timeHorizon === "month"
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${timeHorizon === "month"
                     ? "bg-blue-600 text-white"
                     : "text-[var(--fg-muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-subtle)]"
-                }`}
+                  }`}
               >
                 This Month
               </button>
@@ -287,11 +283,10 @@ export default function Feed({ initialData }) {
               <button
                 key={t.id}
                 onClick={() => setActiveTopic(t.id)}
-                className={`whitespace-nowrap px-2.5 py-1 text-xs rounded border transition-colors ${
-                  activeTopic === t.id
+                className={`whitespace-nowrap px-2.5 py-1 text-xs rounded border transition-colors ${activeTopic === t.id
                     ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-transparent font-medium"
                     : "bg-[var(--bg-subtle)] text-[var(--fg-muted)] border-[var(--border)] hover:text-[var(--fg)]"
-                }`}
+                  }`}
               >
                 {t.label}
               </button>
@@ -360,7 +355,7 @@ export default function Feed({ initialData }) {
       <footer className="mt-16 border-t border-[var(--border)] bg-[var(--bg-subtle)] py-6 text-xs text-[var(--fg-dim)]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div>
-            AI Pulse · Live RSS Ingestion from arXiv, Hugging Face, OpenAI, Anthropic, Google & Hacker News
+            MyAIDaily · Live RSS Ingestion from arXiv, Hugging Face, The Hacker News, OpenAI, Anthropic, Google & Hacker News
           </div>
           <div className="font-mono text-[11px]">
             Zero API Tokens Consumed · Edge Cached on Vercel

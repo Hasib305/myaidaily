@@ -1,5 +1,5 @@
 {
-  "name": "ai-pulse",
+  "name": "myaidaily",
   "private": true,
   "scripts": {
     "dev": "next dev",
