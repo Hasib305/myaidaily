@@ -35,6 +35,11 @@ export default function NewsCard({ item, isBookmarked, onToggleBookmark, onSelec
         <div className="flex items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-2 text-xs text-[var(--fg-muted)]">
             <span className="font-semibold text-blue-600 dark:text-blue-400">{item.source}</span>
+            {item.points > 0 && (
+              <span className="font-bold text-amber-600 dark:text-amber-400 font-mono text-[11px] bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800">
+                ▲ {item.points.toLocaleString()} pts
+              </span>
+            )}
             <span className="text-[var(--fg-dim)]">•</span>
             <span className="text-[var(--fg-dim)] font-mono">{formatRelativeTime(item.date)}</span>
           </div>

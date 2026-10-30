@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import Navbar from "./components/Navbar";
 import NewsCard from "./components/NewsCard";
-import { Filter, X, ChevronDown, ChevronUp, Info, Check } from "lucide-react";
+import { X, ChevronDown, ChevronUp, Info, Check, Flame, Trophy, Sparkles } from "lucide-react";
 
 const TOPICS = [
   { id: "all", label: "All Topics" },
@@ -13,6 +13,14 @@ const TOPICS = [
   { id: "infra-serving", label: "Inference & Serving" },
   { id: "devtools-coding", label: "Developer Tools" },
   { id: "research-papers", label: "Research & Papers" },
+];
+
+const TIME_HORIZONS = [
+  { id: "live", label: "Live Today (24h)", badge: "Live" },
+  { id: "week", label: "Top of the Week", isTop: true },
+  { id: "month", label: "Top of the Month", isTop: true },
+  { id: "six_months", label: "Top 6 Months", isTop: true },
+  { id: "year", label: "Top of the Year", isTop: true },
 ];
 
 const QUICK_EXPLAINERS = [
@@ -25,14 +33,18 @@ const QUICK_EXPLAINERS = [
 
 export default function Feed({ initialData }) {
   // Live Data State
-  const [items, setItems] = useState(initialData?.items || []);
+  const [liveItems, setLiveItems] = useState(initialData?.items || []);
   const [stats, setStats] = useState(initialData?.stats || {});
   const [lastUpdated, setLastUpdated] = useState(initialData?.stats?.updatedAt || new Date().toISOString());
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshNotice, setRefreshNotice] = useState(false);
 
+  // Top Stories State (Week, Month, 6 Months, Year)
+  const [topItems, setTopItems] = useState([]);
+  const [isLoadingTop, setIsLoadingTop] = useState(false);
+
   // Filters State
-  const [timeHorizon, setTimeHorizon] = useState("all"); // 'all' | 'today' | 'week' | 'month' | 'bookmarks'
+  const [timeHorizon, setTimeHorizon] = useState("live"); // 'live' | 'week' | 'month' | 'six_months' | 'year' | 'bookmarks'
   const [activeTopic, setActiveTopic] = useState("all");
   const [activeTag, setActiveTag] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,7 +64,7 @@ export default function Feed({ initialData }) {
         setIsDark(savedTheme === "dark");
         document.documentElement.classList.toggle("dark", savedTheme === "dark");
       }
-    } catch { }
+    } catch {}
 
     const handleKeyDown = (e) => {
       if (e.key === "/" && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
@@ -65,20 +77,56 @@ export default function Feed({ initialData }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  // Fetch top stories when timeframe (week/month/six_months/year) or topic changes
+  const loadTopStories = useCallback(async (timeframe, topic) => {
+    setIsLoadingTop(true);
+    try {
+      const res = await fetch(`/api/news?mode=top&timeframe=${timeframe}&topic=${topic}`);
+      if (res.ok) {
+        const json = await res.json();
+        setTopItems(json.items || []);
+      }
+    } catch (err) {
+      console.error("Failed to load top stories:", err);
+    } finally {
+      setIsLoadingTop(false);
+    }
+  }, []);
+
+  // Handle switching time horizon
+  const handleSelectTimeHorizon = (horizonId) => {
+    setTimeHorizon(horizonId);
+    if (["week", "month", "six_months", "year"].includes(horizonId)) {
+      loadTopStories(horizonId, activeTopic);
+    }
+  };
+
+  // Handle switching topic
+  const handleSelectTopic = (topicId) => {
+    setActiveTopic(topicId);
+    if (["week", "month", "six_months", "year"].includes(timeHorizon)) {
+      loadTopStories(timeHorizon, topicId);
+    }
+  };
+
   // Live Refresh handler
   const handleLiveRefresh = async () => {
     if (isRefreshing) return;
     setIsRefreshing(true);
     try {
-      const res = await fetch("/api/news?refresh=true");
-      if (res.ok) {
-        const fresh = await res.json();
-        if (fresh.items && fresh.items.length > 0) {
-          setItems(fresh.items);
-          setStats(fresh.stats);
-          setLastUpdated(fresh.stats.updatedAt);
-          setRefreshNotice(true);
-          setTimeout(() => setRefreshNotice(false), 3000);
+      if (["week", "month", "six_months", "year"].includes(timeHorizon)) {
+        await loadTopStories(timeHorizon, activeTopic);
+      } else {
+        const res = await fetch("/api/news?refresh=true");
+        if (res.ok) {
+          const fresh = await res.json();
+          if (fresh.items && fresh.items.length > 0) {
+            setLiveItems(fresh.items);
+            setStats(fresh.stats);
+            setLastUpdated(fresh.stats.updatedAt);
+            setRefreshNotice(true);
+            setTimeout(() => setRefreshNotice(false), 3000);
+          }
         }
       }
     } catch (err) {
@@ -94,7 +142,7 @@ export default function Feed({ initialData }) {
     document.documentElement.classList.toggle("dark", nextDark);
     try {
       localStorage.setItem("myaidaily_theme", nextDark ? "dark" : "light");
-    } catch { }
+    } catch {}
   };
 
   const toggleBookmark = (item) => {
@@ -108,24 +156,24 @@ export default function Feed({ initialData }) {
     setBookmarks(next);
     try {
       localStorage.setItem("myaidaily_bookmarks", JSON.stringify(next));
-    } catch { }
+    } catch {}
   };
+
+  // Determine current displayed list
+  const currentSourceList = useMemo(() => {
+    if (timeHorizon === "bookmarks") return bookmarks;
+    if (["week", "month", "six_months", "year"].includes(timeHorizon)) {
+      return topItems;
+    }
+    // 'live'
+    return liveItems;
+  }, [timeHorizon, bookmarks, topItems, liveItems]);
 
   // Filtered stories
   const filteredItems = useMemo(() => {
-    let list = items;
+    let list = currentSourceList;
 
-    if (timeHorizon === "today") {
-      list = list.filter((i) => i.isToday);
-    } else if (timeHorizon === "week") {
-      list = list.filter((i) => i.isThisWeek);
-    } else if (timeHorizon === "month") {
-      list = list.filter((i) => i.isThisMonth);
-    } else if (timeHorizon === "bookmarks") {
-      list = bookmarks;
-    }
-
-    if (activeTopic !== "all") {
+    if (timeHorizon === "live" && activeTopic !== "all") {
       list = list.filter((i) => i.pillar === activeTopic);
     }
 
@@ -148,20 +196,20 @@ export default function Feed({ initialData }) {
     if (sortBy === "newest") {
       sorted.sort((a, b) => b.date - a.date);
     } else if (sortBy === "relevance") {
-      sorted.sort((a, b) => (b.score ?? 5) - (a.score ?? 5) || b.date - a.date);
+      sorted.sort((a, b) => (b.points || b.score || 0) - (a.points || a.score || 0) || b.date - a.date);
     }
 
     return sorted;
-  }, [items, bookmarks, timeHorizon, activeTopic, activeTag, searchQuery, sortBy]);
+  }, [currentSourceList, timeHorizon, activeTopic, activeTag, searchQuery, sortBy]);
 
   const resetFilters = () => {
-    setTimeHorizon("all");
+    setTimeHorizon("live");
     setActiveTopic("all");
     setActiveTag("");
     setSearchQuery("");
   };
 
-  const hasActiveFilters = activeTopic !== "all" || activeTag || searchQuery.trim() || timeHorizon !== "all";
+  const hasActiveFilters = activeTopic !== "all" || activeTag || searchQuery.trim() || timeHorizon !== "live";
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg)] text-[var(--fg)]">
@@ -171,8 +219,8 @@ export default function Feed({ initialData }) {
         onSearchChange={setSearchQuery}
         bookmarksCount={bookmarks.length}
         activeTab={timeHorizon}
-        onSelectTab={(tab) => setTimeHorizon(tab)}
-        isRefreshing={isRefreshing}
+        onSelectTab={(tab) => handleSelectTimeHorizon(tab)}
+        isRefreshing={isRefreshing || isLoadingTop}
         onRefresh={handleLiveRefresh}
         lastUpdated={lastUpdated}
         isDark={isDark}
@@ -185,7 +233,7 @@ export default function Feed({ initialData }) {
           <div className="mb-4 p-3 rounded-lg bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs flex items-center justify-between">
             <span className="flex items-center gap-1.5 font-medium">
               <Check className="w-4 h-4 text-emerald-600" />
-              Live news feed refreshed successfully! ({items.length} total articles)
+              Live news feed refreshed successfully! ({liveItems.length} total articles)
             </span>
             <button onClick={() => setRefreshNotice(false)} className="text-emerald-700 hover:text-emerald-900">
               <X className="w-3.5 h-3.5" />
@@ -193,7 +241,7 @@ export default function Feed({ initialData }) {
           </div>
         )}
 
-        {/* Quick Reference Guide Toggle (Explains KAG, MCP, etc.) */}
+        {/* Quick Reference Guide Toggle */}
         <div className="mb-6 rounded-lg bg-[var(--bg-subtle)] border border-[var(--border)] overflow-hidden">
           <button
             onClick={() => setShowGuide(!showGuide)}
@@ -219,47 +267,73 @@ export default function Feed({ initialData }) {
 
         {/* Clean Filter Bar */}
         <div className="mb-6 space-y-3">
-          {/* Row 1: Time Horizon Tabs & Sort */}
+          {/* Row 1: Time Horizon Tabs (Week, Month, 6 Months, Year) */}
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] pb-3">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-wrap">
+              {/* Live Today */}
               <button
-                onClick={() => setTimeHorizon("all")}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${timeHorizon === "all"
+                onClick={() => handleSelectTimeHorizon("live")}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                  timeHorizon === "live"
                     ? "bg-blue-600 text-white"
                     : "text-[var(--fg-muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-subtle)]"
-                  }`}
+                }`}
               >
-                All Stories ({items.length})
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Live Today</span>
+                <span className="text-[10px] opacity-75 font-mono">({stats.todayCount || liveItems.length})</span>
               </button>
 
+              {/* Top of Week */}
               <button
-                onClick={() => setTimeHorizon("today")}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${timeHorizon === "today"
+                onClick={() => handleSelectTimeHorizon("week")}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1 ${
+                  timeHorizon === "week"
                     ? "bg-blue-600 text-white"
                     : "text-[var(--fg-muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-subtle)]"
-                  }`}
+                }`}
               >
-                Today ({stats.todayCount || 0})
+                <Trophy className="w-3 h-3 text-amber-400" />
+                <span>Top of Week</span>
               </button>
 
+              {/* Top of Month */}
               <button
-                onClick={() => setTimeHorizon("week")}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${timeHorizon === "week"
+                onClick={() => handleSelectTimeHorizon("month")}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1 ${
+                  timeHorizon === "month"
                     ? "bg-blue-600 text-white"
                     : "text-[var(--fg-muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-subtle)]"
-                  }`}
+                }`}
               >
-                Past 7 Days ({stats.weekCount || 0})
+                <Trophy className="w-3 h-3 text-amber-400" />
+                <span>Top of Month</span>
               </button>
 
+              {/* Top 6 Months */}
               <button
-                onClick={() => setTimeHorizon("month")}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${timeHorizon === "month"
+                onClick={() => handleSelectTimeHorizon("six_months")}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1 ${
+                  timeHorizon === "six_months"
                     ? "bg-blue-600 text-white"
                     : "text-[var(--fg-muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-subtle)]"
-                  }`}
+                }`}
               >
-                This Month
+                <Flame className="w-3 h-3 text-orange-400" />
+                <span className="font-semibold">Top 6 Months</span>
+              </button>
+
+              {/* Top of the Year */}
+              <button
+                onClick={() => handleSelectTimeHorizon("year")}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1 ${
+                  timeHorizon === "year"
+                    ? "bg-blue-600 text-white"
+                    : "text-[var(--fg-muted)] hover:text-[var(--fg)] hover:bg-[var(--bg-subtle)]"
+                }`}
+              >
+                <Sparkles className="w-3 h-3 text-amber-400" />
+                <span className="font-semibold">Top of Year</span>
               </button>
             </div>
 
@@ -272,21 +346,22 @@ export default function Feed({ initialData }) {
                 className="bg-[var(--bg-subtle)] border border-[var(--border)] text-[var(--fg-muted)] px-2 py-1 rounded text-xs focus:outline-none"
               >
                 <option value="newest">Newest First</option>
-                <option value="relevance">Highest Technical Relevance</option>
+                <option value="relevance">Highest Upvotes / Points</option>
               </select>
             </div>
           </div>
 
-          {/* Row 2: Topic Pills */}
+          {/* Row 2: Topic Selector (Per-topic filtering across week/month/6m/year) */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
             {TOPICS.map((t) => (
               <button
                 key={t.id}
-                onClick={() => setActiveTopic(t.id)}
-                className={`whitespace-nowrap px-2.5 py-1 text-xs rounded border transition-colors ${activeTopic === t.id
+                onClick={() => handleSelectTopic(t.id)}
+                className={`whitespace-nowrap px-2.5 py-1 text-xs rounded border transition-colors ${
+                  activeTopic === t.id
                     ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-transparent font-medium"
                     : "bg-[var(--bg-subtle)] text-[var(--fg-muted)] border-[var(--border)] hover:text-[var(--fg)]"
-                  }`}
+                }`}
               >
                 {t.label}
               </button>
@@ -299,8 +374,8 @@ export default function Feed({ initialData }) {
               <span className="text-[var(--fg-dim)]">Filtered by:</span>
               {activeTopic !== "all" && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--bg-subtle)] border border-[var(--border)] text-[var(--fg-muted)]">
-                  {TOPICS.find((t) => t.id === activeTopic)?.label}
-                  <X className="w-3 h-3 cursor-pointer" onClick={() => setActiveTopic("all")} />
+                  Topic: {TOPICS.find((t) => t.id === activeTopic)?.label}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => handleSelectTopic("all")} />
                 </span>
               )}
               {activeTag && (
@@ -322,8 +397,15 @@ export default function Feed({ initialData }) {
           )}
         </div>
 
-        {/* News Feed Stream */}
-        {filteredItems.length === 0 ? (
+        {/* Content Area */}
+        {isLoadingTop ? (
+          <div className="text-center py-20 px-4 rounded-xl border border-[var(--border)] bg-[var(--bg-subtle)]">
+            <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+            <p className="text-xs text-[var(--fg-muted)]">
+              Fetching community-ranked breakthroughs for {TOPICS.find((t) => t.id === activeTopic)?.label}...
+            </p>
+          </div>
+        ) : filteredItems.length === 0 ? (
           <div className="text-center py-16 px-4 rounded-xl border border-[var(--border)] bg-[var(--bg-subtle)]">
             <h3 className="text-sm font-semibold text-[var(--fg)] mb-1">No matching articles found</h3>
             <p className="text-xs text-[var(--fg-dim)] max-w-sm mx-auto mb-4">
@@ -333,7 +415,7 @@ export default function Feed({ initialData }) {
               onClick={resetFilters}
               className="px-3 py-1.5 rounded bg-blue-600 text-white text-xs font-medium hover:bg-blue-500 transition-colors"
             >
-              Show All Stories
+              Show Live Today
             </button>
           </div>
         ) : (
@@ -355,10 +437,10 @@ export default function Feed({ initialData }) {
       <footer className="mt-16 border-t border-[var(--border)] bg-[var(--bg-subtle)] py-6 text-xs text-[var(--fg-dim)]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div>
-            MyAIDaily · Live RSS Ingestion from arXiv, Hugging Face, The Hacker News, OpenAI, Anthropic, Google & Hacker News
+            MyAIDaily · Free AI Intelligence Wire (Live RSS + Community Ranked Top of Week, Month, 6 Months & Year)
           </div>
           <div className="font-mono text-[11px]">
-            Zero API Tokens Consumed · Edge Cached on Vercel
+            100% Free & Open · Zero Token Cost · Edge Cached on Vercel
           </div>
         </div>
       </footer>
